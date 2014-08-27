@@ -7,11 +7,6 @@ int nullFunction(lua_State *L)
 	return 1;
 }
 
-int CheckLootDrop(lua_State *L)
-{
-
-}
-
 PD2MMF::PD2MMF()
 {
 	RegisterCallback(NEWSTATE_CALLBACK, (CallbackFunction)&PD2MMF::LuaNewState, this);
@@ -137,13 +132,13 @@ void PD2MMF::setupModKey(lua_State *L)
 	CryptHashData(hHash, (const LPBYTE)digestMe.c_str(), digestMe.length(), 0);
 	DWORD hashSize, dwLen = sizeof(DWORD);
 	CryptGetHashParam(hHash, HP_HASHSIZE, (LPBYTE)&hashSize, &dwLen, 0);
-	unique_ptr<BYTE> hashBuf(new BYTE[hashSize]);
+	unique_ptr<BYTE[]> hashBuf(new BYTE[hashSize]);
 	CryptGetHashParam(hHash, HP_HASHVAL, hashBuf.get(), &hashSize, 0);
 	CryptDestroyHash(hHash);
 	CryptReleaseContext(hCryptProv, 0);
 	ostringstream tmp;
 	for (DWORD i = 0; i < hashSize; i++)
-		tmp << hex << (DWORD)hashBuf.get()[i];
+		tmp << hex << (DWORD)hashBuf[i];
 	sKey += tmp.str();
 	lua_pushstring(L, sKey.c_str());
 	lua_setfield(L, -2, "_BUILD_SEARCH_INTEREST_KEY");

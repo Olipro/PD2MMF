@@ -10,30 +10,21 @@ RegisterMod("ClassicStealth", "1.0.0", {
 if RequiredScript == "lib/units/enemies/cop/copbrain" then
 	local oldPager = CopBrain.is_pager_started
 	function CopBrain:is_pager_started(...)
-		if self._unit:character_damage()._dead then
-			return oldPager(self, ...)
-		end
-		return false
+		return self._unit:character_damage()._dead and oldPager(self, ...) or false
 	end
 
 elseif RequiredScript == "lib/units/enemies/cop/logics/coplogicintimidated" then
 	CopLogicIntimidated._chk_begin_alarm_pager = function() end
 	
-	local oldIntimidated = CopLogicIntimidated.on_intimidated
-	function CopLogicIntimidated.on_intimidated(...)
-		local state = managers.groupai:state()
-		local oldmode = state.whisper_mode
-		state.whisper_mode = function() return false end
-		oldIntimidated(...)
-		state.whisper_mode = oldmode
-	end
-	local oldHandsUp = CopLogicIntimidated._start_action_hands_up
-	function CopLogicIntimidated._start_action_hands_up(...)
-		local state = managers.groupai:state()
-		local oldmode = state.whisper_mode
-		state.whisper_mode = function() return false end
-		oldHandsUp(...)
-		state.whisper_mode = oldmode
+	for _,v in ipairs({"on_intimidated", "_start_action_hands_up"}) do 
+		local upvalue = CopLogicIntimidated[v]
+		CopLogicIntimidated[v] = function(...)
+			local state = managers.groupai:state()
+			local oldmode = state.whisper_mode
+			state.whisper_mode = function() return false end
+			upvalue(...)
+			state.whisper_mode = oldmode
+		end
 	end
 	
 elseif RequiredScript == "lib/units/interactions/interactionext" then
@@ -75,9 +66,7 @@ elseif RequiredScript == "lib/managers/mission/elementspawnenemygroup" then
 	local oldExec = ElementSpawnEnemyGroup.on_executed
 	function ElementSpawnEnemyGroup:on_executed(...)
 		if managers.groupai:state():whisper_mode() and Global.game_settings.difficulty ~= "overkill_290" then
-			while managers.enemy._enemy_data.nr_units + self._group_data.amount > 5 and self._group_data.amount > 0 do
-				self._group_data.amount = self._group_data.amount - 1
-			end
+			self._group_data.amount = managers.enemy._enemy_data.nr_units + self._group_data.amount > 5 and 5 - managers.enemy._enemy_data.nr_units or self._group_data.amount
 		end
 		if self._group_data.amount > 0 then
 			return oldExec(self, ...)
