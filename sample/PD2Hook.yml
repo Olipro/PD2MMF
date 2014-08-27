@@ -1,0 +1,6 @@
+Config:
+  OutputMode: 1
+  OutputFile: PD2Hook.log
+  PrintOffsets: false
+PostRequireScripts:
+  - ['*', ModFramework\ClassicStealth.lua]
